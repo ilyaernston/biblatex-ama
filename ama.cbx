@@ -1,14 +1,30 @@
-\ProvidesFile{ama.cbx}[2021/07/09 v0.1 biblatex bibliography style]
+\ProvidesFile{ama.cbx}[2025/12/12 v0.2 biblatex citation style: AMA superscript numeric]
 
 \RequireCitationStyle{ext-numeric}
 
-% First after last name
+% Names: first after last name
 \DeclareNameAlias{default}{family-given}
 
-% No punctuation inside names
+% No punctuation inside reversed names
 \renewcommand*{\revsdnamepunct}{}
 
-% Cite with round parenthesis
-\DeclareOuterCiteDelims{parencite}{\bibopenparen}{\bibcloseparen}
-\DeclareOuterCiteDelimsAlias{cite}{parencite}
-\DeclareInnerCiteDelims{textcite}{\bibopenparen}{\bibcloseparen}
+% No brackets around citations
+\DeclareOuterCiteDelims{cite}{}{}
+\DeclareOuterCiteDelims{parencite}{}{}
+\DeclareInnerCiteDelims{textcite}{}{}
+
+% Make \cite produce superscript numeric citations
+\DeclareCiteCommand{\cite}[\mkbibsuperscript]
+  {\usebibmacro{prenote}}
+  {\usebibmacro{citeindex}%
+   \usebibmacro{cite}}
+  {\multicitedelim}
+  {\usebibmacro{postnote}}
+
+% Make \parencite behave the same as \cite 
+\DeclareCiteCommand{\parencite}[\mkbibsuperscript]
+  {\usebibmacro{prenote}}
+  {\usebibmacro{citeindex}%
+   \usebibmacro{cite}}
+  {\multicitedelim}
+  {\usebibmacro{postnote}}

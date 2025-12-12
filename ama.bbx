@@ -1,48 +1,121 @@
-\ProvidesFile{ama.bbx}[2021/07/09 v0.1 biblatex bibliography style]
+\ProvidesFile{ama.bbx}[2025/12/12 v0.3 biblatex bibliography style: AMA-like]
 
 \RequireBibliographyStyle{numeric}
 
-\ExecuteBibliographyOptions{sorting=none, maxbibnames=6, minbibnames=3, doi=false, isbn=false, url=false, uniquename=false, uniquelist=false, giveninits=true, terseinits=true}
+\ExecuteBibliographyOptions{
+  sorting=none,
+  maxbibnames=6,
+  minbibnames=3,
+  doi=true,  % enable DOI handling
+  isbn=false,
+  url=true,  % enable URL handling (fallback if no DOI)
+  uniquename=false,
+  uniquelist=false,
+  giveninits=true,
+  terseinits=true
+}
 
-\DeclareFieldFormat[article,inbook,incollection,inproceedings,patent,thesis,unpublished]{title}{{#1\isdot}}
+% --- Titles, "in:" macro, pages ---
+
+% Article-like titles end with a period.
+\DeclareFieldFormat[
+  article,
+  inbook,
+  incollection,
+  inproceedings,
+  patent,
+  thesis,
+  unpublished
+]{title}{#1\isdot}
+
+% Suppress "In:" before container titles.
 \renewbibmacro{in:}{}
+
+% Pages printed plainly; colon before pages is handled by \bibpagespunct.
 \DeclareFieldFormat{pages}{#1}
+% AMA style: "Year;vol(issue):pages"
 \renewcommand*{\bibpagespunct}{\addcolon}
 
+% --- Journal / year / volume / issue ---
+
 \renewbibmacro*{journal+issuetitle}{%
-    \usebibmacro{journal}%
-    \setunit*{\addperiod\addspace}%
-    \iffieldundef{series}
+  \usebibmacro{journal}% Journal name
+  \setunit*{\addperiod\space}% "Journal. "
+  \iffieldundef{series}
     {}
     {\newunit
-        \printfield{series}%
-        \setunit{\addspace}}%
-    \usebibmacro{issue+date}%
-    \setunit{\addsemicolon\addspace}%
-    \printfield{volume}%
-    (\printfield{number})%
-    \setunit{\addcolon\space}%
-    \usebibmacro{issue}%
-    \newunit%
+       \printfield{series}%
+       \setunit{\addspace}}%
+  \usebibmacro{issue+date}% prints year (see below)
+  \setunit{\addsemicolon}% "Year;volume"
+  \printfield{volume}%
+  \iffieldundef{number}
+    {}
+    {\printtext{\mkbibparens{\printfield{number}}}}% "(issue)"
+  \newunit% colon before pages comes from \bibpagespunct
 }
 
-% Print only the year
+% Print only the year (no month/day) for journals.
 \renewbibmacro*{issue+date}{%
-    \printfield{year}%
+  \printfield{year}%
 }
 
-% Remove "and" from list of authors
+% --- Name list punctuation / label formats ---
+
+% Remove "and" before the last name: use just comma separators.
 \renewcommand*{\finalnamedelim}{\multinamedelim}
 
-% Bib list with num-dot format
+% Numbered references as "1." "2." etc.
 \DeclareFieldFormat{labelnumberwidth}{#1\adddot}
+
+% Shorthands, if used, in parentheses.
 \DeclareFieldFormat{shorthandwidth}{\mkbibparens{#1}}
 
-% Make author names Title Case
-\def\FirstLetterUppercase#1{\expandafter\FirstLetterUppercase@i#1 \@nil}
-\def\FirstLetterUppercase@i#1#2 #3\@nil{%
-  \MakeUppercase{#1}\MakeLowercase{#2}
-  \ifx\relax#3\relax\def\next@i{}\else\def\next@i{\expandafter\FirstLetterUppercase@i#3\@nil}\fi%
-  \next@i}
+% --- DOI and URL formatting ---
 
-\InitializeBibliographyStyle{\renewcommand*{\mkbibnamefamily}[1]{\FirstLetterUppercase{#1}}}
+% Format of DOI token itself:
+% Produces: "doi:10.1001/jama.2019.12345"
+\DeclareFieldFormat{doi}{doi:\space\url{#1}}
+
+% URL printed plainly (hyperlinked if hyperref is loaded).
+\DeclareFieldFormat{url}{\url{#1}}
+
+% Make the localized "urlseen" string be "Accessed"
+\DefineBibliographyStrings{english}{
+  urlseen = {Accessed},
+}
+
+% Prefer DOI over URL:
+% If DOI exists -> ". doi:10.xxxx/..."
+% Else, nothing here; URL is handled in url+urldate.
+\renewbibmacro*{doi+eprint+url}{%
+  \iftoggle{bbx:doi}{%
+    \iffieldundef{doi}
+      {}
+      {%
+        \setunit{\addperiod\space}%
+        \printfield{doi}%
+      }%
+  }{}%
+}
+
+% If no DOI, but URL exists:
+% "... Year;vol(issue):pages. Accessed <date>. <URL>"
+\renewbibmacro*{url+urldate}{%
+  \iftoggle{bbx:url}{%
+    \iffieldundef{url}
+      {}
+      {%
+        % Accessed date (using biblatex's url date format)
+        \printurldate % this uses "Accessed" via urlseen string
+        \setunit{\addperiod\space}% ". "
+        \printfield{url}%
+      }%
+  }{}%
+}
+
+% --- Remove language fields ---
+\AtEveryBibitem{%
+  \clearlist{language}%
+  \clearlist{origlanguage}%
+}
