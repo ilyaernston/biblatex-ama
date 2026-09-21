@@ -74,7 +74,6 @@
 % --- DOI and URL formatting ---
 
 % Format of DOI token itself:
-% Produces: "doi:10.1001/jama.2019.12345"
 \DeclareFieldFormat{doi}{doi:\space\url{#1}}
 
 % URL printed plainly (hyperlinked if hyperref is loaded).
@@ -113,6 +112,20 @@
       }%
   }{}%
 }
+
+% --- Enforce line breaking ---
+
+
+\setcounter{biburlnumpenalty}{9000}
+\setcounter{biburlucpenalty}{9000}
+\setcounter{biburllcpenalty}{9000}
+
+\appto{\bibsetup}{%
+  \tolerance=9999\relax
+  \emergencystretch=3em\relax
+}
+
+
 
 % --- Remove language fields ---
 \AtEveryBibitem{%
